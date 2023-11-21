@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const User = require("../models/user");
+const jwt = require("jsonwebtoken");
 
 //salt rounds - amount of times encrypted
 const saltRounds = 10;
@@ -66,7 +67,36 @@ async function comparePassword(req, res, next) {
     }
 }
 
+//FUNCTION TO CHECK TOKEN
+async function tokenCheck(req, res, next) {
+    try {
+        const secretKey = process.env.JWTPASSWORD; 
+        const token = req.header("Authorization").replace("Bearer ", ""); //requires token to be added to authorization and removed bearer from the start of the line
+        const decodedToken = jwt.verify(token, secretKey);
+        console.log(decodedToken);
+
+        const userEmail = decodedToken.email; //compare email with the corresponding token using findone method
+        const findResponse = await User.findOne({
+            where : {
+                email : userEmail
+            }
+        })
+        if(!findResponse) {
+            throw new Error("user no longer in the database") // if findResponse is negative then error message displayed
+        } else {
+            req.body.email = userEmail // if no error, then next()
+            next();
+        }
+    } catch (error) {
+        res.status(500).json({
+            errormessage : error.message
+        })
+        console.log(error)
+    }
+}
+
 module.exports = {
     hashPassword,
-    comparePassword
+    comparePassword,
+    tokenCheck
 }

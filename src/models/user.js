@@ -5,12 +5,15 @@ const User = SQLconnection.define("User", {
     email : {
         type : DataTypes.STRING,
         unique : true,
-        allowNull : false
+        allowNull : false,
+        validate: {
+            isEmail : true
+        }
     },
     password : {
         type : DataTypes.STRING,
-        allowNull : false
-    }
+        allowNull : false,
+    },
 });
 
 module.exports = User;
